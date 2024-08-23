@@ -1,0 +1,12 @@
+{
+  "name": "nodeapi",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Kirisu2503",
+  "license": "MIT",
+  "description": "Api de ejemplo hecha con node y jwt"
+}
