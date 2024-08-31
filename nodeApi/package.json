@@ -8,5 +8,12 @@
   "keywords": [],
   "author": "Kirisu2503",
   "license": "MIT",
-  "description": "Api de ejemplo hecha con node y jwt"
+  "description": "Api de ejemplo hecha con node y jwt",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "mssql": "^11.0.1"
+  }
 }
