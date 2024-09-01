@@ -25,7 +25,7 @@ INSERT INTO roles VALUES
 GO
 
 -- PROCEDIMIENTOS ALMACENADOS
-CREATE PROCEDURE sp_RegistrarUsuario
+CREATE PROCEDURE sp_RegistrarUsuario -- Registro de usuario
     @nombre NVARCHAR(100),
     @email NVARCHAR(100),
     @password NVARCHAR(255),
@@ -49,8 +49,6 @@ BEGIN
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
-
-        -- Manejo de errores
         DECLARE @ErrorMessage NVARCHAR(4000);
         DECLARE @ErrorSeverity INT;
         DECLARE @ErrorState INT;
@@ -62,5 +60,15 @@ BEGIN
         RAISERROR (@ErrorMessage, @ErrorSeverity, @ErrorState);
     END CATCH
 END;
+GO
 
+CREATE PROCEDURE sp_IniciarSesion -- Para inicio de sesion
+    @email NVARCHAR(100)
+AS
+BEGIN
+	-- Retornar informacion del usuario
+	SELECT id, nombre, email, password, rol_id
+	FROM usuarios
+	WHERE email = @email;
+END;
 GO

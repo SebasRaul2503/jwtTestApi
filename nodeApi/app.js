@@ -1,5 +1,5 @@
 const express = require('express');
-const cors = require('cors');
+const cors = require('cors'); // se usa cors para permitir conexiones locales
 const app = express();
 const PORT = 3000;
 

@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt')
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
 const { sql, poolPromise} = require('../../database/connection');
 
 /*
@@ -74,6 +76,8 @@ router.post('/agregarUsuario', async(req, res) => {
     }
 });
 
+
+
 /*
     Imaginemos que necesitamos obtener data de un usuario en especifico
     (Esto obviamente no lo haria cualquier usuario en una aplicacion, solo
@@ -92,9 +96,105 @@ router.post('/agregarUsuario', async(req, res) => {
     - correo
     - rol
 
-    Para ello, usaremos un procedimiento almacenado simple que permita
-    pasar los parametros dichos y retornar la data necesaria
+    Para ello, usaremos un procedimiento almacenado que
+    verifique la existencia del correo mientras que el
+    backend (la api), se encarga de validar la contraseña
 */
+router.post('/loginUsuario', async (req, res) => {
+    try {
+        const { CORREO, CONTRASENA } = req.body;
 
+        const pool = await poolPromise;
+
+        const result = await pool.request()
+            .input('email', sql.NVarChar, CORREO)
+            .execute('sp_IniciarSesion');
+
+        const user = result.recordset[0];
+
+        if (user && user.password) {
+            const validPassword = await bcrypt.compare(CONTRASENA, user.password);
+
+            if (validPassword) { // Contraseña valida = devolvemos la data del usuario
+                res.status(200).json({// sin jwt
+                    message: 'Inicio de sesion exitoso',
+                    user: {
+                        id: user.id,
+                        nombre: user.nombre,
+                        email: user.email,
+                        rol_id: user.rol_id
+                    }
+                });
+            }
+        } else {
+            // Usuario inexistente o credenciales incorrectas
+            res.status(401).send('Usuario o contraseña incorrectos');
+        }
+
+        /*
+            la ruta seria:
+            http://localhost:3000/usuarios/loginUsuario
+            tipo de solicitud: POST
+            cuerpo en JSON:
+            {
+                "CORREO": "correoSebastian@mail.com"
+                "CONTRASENA": secure74*drowssap
+            }
+        */
+    } catch (error) {
+        res.status(500).send('Error en el inicio de sesion');
+    }
+});
+
+
+
+/*
+    Mismo ejemplo que el anterior, pero de manera mas segura, usando JSON Web Token
+*/
+router.post('/loginUsuarioJwt', async(req, res) =>{
+    try{
+        const { CORREO, CONTRASENA } = req.body;
+
+        const pool = await poolPromise;
+
+        const result = await pool.request()
+        .input('email', sql.NVarChar, CORREO)
+        .execute('sp_IniciarSesion');
+
+        const user = result.recordset[0];
+
+        if (user && user.password) {
+            const validPassword = await bcrypt.compare(CONTRASENA, user.password);
+
+            if (validPassword) {
+
+                const token = jwt.sign( // se devuelve un token jwt
+                    {
+                        id: user.id,
+                        nombre: user.nombre,
+                        email: user.email,
+                        rol_id: user.rol_id
+                    },
+                    process.env.SECRET_KEY,
+                    {
+                        expiresIn: '1h'
+                    } // Configuraciones adicionales del token
+                );
+
+                res.status(200).json({
+                    message: 'Inicio de sesión exitoso',
+                    token: token
+                });
+            }
+        } else {
+            // Usuario inexistente o credenciales incorrectas
+            res.status(401).send('Usuario o contraseña incorrectos');
+        }
+    }
+    catch (error){
+        console.error(error);
+        res.status(500).send('Error en el inicio de sesion');
+    }
+});
 
 module.exports = router;
